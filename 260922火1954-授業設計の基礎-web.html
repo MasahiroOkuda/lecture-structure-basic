@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>問いでつなぐ ── 三角形の面積</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FBFCF7; --grid:#E1E9EF; --ink:#1E2A44; --sub:#56627A;
+  --line:#C9D3DC; --card:#FFFFFF; --red:#D2343A; --pencil:#F2C230; --pencil-soft:#FFF3C4;
+  --ok:#2E7D5B; --shadow:0 1px 0 rgba(30,42,68,.12);
+  --hand:"Klee One","Hiragino Mincho ProN","Yu Mincho",serif;
+  --ui:"BIZ UDPGothic","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#1E3830; --grid:#27463C; --ink:#F1F3EC; --sub:#B9C8BF;
+    --line:#3E5F53; --card:#24433A; --red:#FF8A80; --pencil:#F7D65E; --pencil-soft:#3B4B2E;
+    --ok:#8FE0B5; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#1E3830; --grid:#27463C; --ink:#F1F3EC; --sub:#B9C8BF;
+  --line:#3E5F53; --card:#24433A; --red:#FF8A80; --pencil:#F7D65E; --pencil-soft:#3B4B2E;
+  --ok:#8FE0B5; --shadow:none;
+}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*,*::before,*::after{box-sizing:inherit}
+body{
+  margin:0; color:var(--ink); font-family:var(--ui); line-height:1.7;
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+main{max-width:640px;margin:0 auto;padding:20px 16px 120px}
+h1{font-family:var(--hand);font-weight:600;font-size:1.6rem;line-height:1.4;margin:8px 0 4px}
+.lead{color:var(--sub);margin:0 0 20px;font-size:.95rem}
+.goal{
+  background:var(--card);border:2px solid var(--ink);border-radius:4px;padding:14px 16px;margin-bottom:24px;
+}
+.goal dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
+.goal dt{font-size:.8rem;color:var(--sub);padding-top:.35em}
+.goal dd{margin:0}
+.goal .concl{font-family:var(--hand);font-weight:600;font-size:1.25rem;background:linear-gradient(transparent 60%,var(--pencil-soft) 60%)}
+h2{font-size:1rem;margin:28px 0 8px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+h2 small{font-weight:400;color:var(--sub);font-size:.8rem}
+.hint{font-size:.85rem;color:var(--sub);margin:0 0 10px}
+
+ol.seq{list-style:none;margin:0;padding:0;counter-reset:s}
+.seq li{
+  counter-increment:s; position:relative; display:grid; grid-template-columns:2rem 1fr auto; gap:8px;
+  align-items:start; background:var(--card); border:1px solid var(--line); border-radius:4px;
+  padding:10px 8px 10px 6px; margin-bottom:6px; box-shadow:var(--shadow);
+}
+.seq li::before{content:counter(s);font-family:var(--hand);font-weight:600;font-size:1.2rem;text-align:center;line-height:1.5}
+.seq .empty{display:block;border:2px dashed var(--line);background:transparent;color:var(--sub);text-align:center;padding:18px;font-size:.9rem;box-shadow:none}
+.seq .empty::before{content:none}
+.seq li.fixed{border:2px solid var(--ink);background:var(--pencil-soft)}
+.seq li.fixed::before{content:"結";font-size:1rem;line-height:1.9}
+.lock{font-size:.72rem;color:var(--sub);border:1px dashed var(--sub);border-radius:3px;padding:3px 6px;white-space:nowrap;align-self:center}
+.tag.cn{background:var(--ink);color:var(--paper);border:1px solid var(--ink)}
+.q{font-family:var(--hand);font-weight:600;font-size:1.05rem;line-height:1.5}
+.a{font-size:.85rem;color:var(--sub);margin-top:2px}
+.ctrl{display:flex;gap:4px}
+.ctrl button{
+  width:36px;height:36px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:4px;
+  font-size:1rem;cursor:pointer;display:grid;place-items:center;padding:0
+}
+.ctrl button:disabled{opacity:.3;cursor:default}
+.mark{
+  position:absolute; right:-6px; top:-10px; width:40px;height:40px; display:grid;place-items:center;
+  font-family:var(--hand);font-weight:600;font-size:1.6rem;color:var(--red);pointer-events:none
+}
+.mark.o{border:3px solid var(--red);border-radius:50%;width:34px;height:34px;top:-8px;right:-4px;font-size:0}
+.note{grid-column:2 / -1;font-size:.82rem;color:var(--red);border-top:1px dashed var(--line);padding-top:6px;margin-top:4px}
+.note.good{color:var(--ok)}
+
+.pool{display:grid;gap:8px}
+.pool button{
+  text-align:left;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:10px 12px;
+  color:var(--ink);cursor:pointer;font:inherit;box-shadow:var(--shadow);display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center
+}
+.pool button .plus{font-size:.8rem;color:var(--sub);border:1px solid var(--line);border-radius:3px;padding:2px 8px;white-space:nowrap}
+.pool .done{color:var(--sub);font-size:.9rem;text-align:center;padding:12px}
+
+.bar{
+  position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:2px solid var(--ink);
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));
+}
+.bar .in{max-width:640px;margin:0 auto;display:flex;gap:8px}
+.btn{
+  flex:1;font:inherit;font-weight:700;padding:12px;border-radius:4px;border:2px solid var(--ink);cursor:pointer;
+  background:var(--ink);color:var(--paper)
+}
+.btn.ghost{background:transparent;color:var(--ink);flex:0 0 auto}
+.btn:disabled{opacity:.4;cursor:default}
+button:focus-visible{outline:3px solid var(--pencil);outline-offset:2px}
+
+.result{margin-top:28px;background:var(--card);border:2px solid var(--red);border-radius:4px;padding:16px}
+.result h3{font-family:var(--hand);font-weight:600;font-size:1.3rem;margin:0 0 6px;color:var(--red)}
+.result p{margin:6px 0}
+.result ul{margin:6px 0;padding-left:1.2em}
+.readq{margin-top:16px;border-top:1px dashed var(--line);padding-top:12px}
+.readq ol{margin:6px 0;padding-left:1.4em;font-family:var(--hand);font-weight:600}
+.readq li{margin:2px 0}
+.readq .end{font-family:var(--hand);font-weight:600;margin-top:6px}
+.hidden{display:none}
+.tag{display:inline-block;font-family:var(--ui);font-weight:700;font-size:.7rem;line-height:1;padding:4px 6px;border-radius:3px;margin:0 6px 4px 0;vertical-align:middle;white-space:nowrap}
+.tag.au{background:var(--pencil-soft);color:var(--ink);border:1px solid var(--pencil)}
+.tag.sp{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+.types{margin-top:16px;border-top:1px dashed var(--line);padding-top:12px}
+.types p{margin:6px 0}
+.readq li .tag{font-weight:700}
+@media (prefers-reduced-motion:no-preference){
+  .mark{animation:pop .25s ease-out}
+  @keyframes pop{from{transform:scale(1.6);opacity:0}to{transform:scale(1);opacity:1}}
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>問いでつなぐ<br>三角形の面積</h1>
+  <p class="lead">カードの中から、結論にたどり着くのに必要なものだけを選んで、聴衆が理解できる順に並べよう。</p>
+
+  <section class="goal" aria-label="お題">
+    <dl>
+      <dt>結論</dt><dd class="concl">三角形の面積は「底辺×高さ÷2」</dd>
+      <dt>聴衆</dt><dd>三角形の面積の公式を習う前の小学生</dd>
+    </dl>
+  </section>
+
+  <h2>あなたの骨組み <small id="count">0枚</small></h2>
+  <p class="hint">問いには2種類あります。<span class="tag au">聴衆の疑問</span>は聞き手から自然に出てくる問い、<span class="tag sp">話し手の問いかけ</span>は話し手が前提をそろえるために差し出す問いです。</p>
+  <ol class="seq" id="seq"></ol>
+
+  <section id="result" class="result hidden" aria-live="polite"></section>
+
+  <h2 id="poolHead">カード置き場 <small>タップで骨組みに追加</small></h2>
+  <div class="pool" id="pool"></div>
+</main>
+
+<div class="bar"><div class="in">
+  <button class="btn ghost" id="reset" type="button">最初から</button>
+  <button class="btn" id="check" type="button">答え合わせ</button>
+</div></div>
+
+<script>
+const CARDS = [
+  {id:"c1", t:"sp", q:"まず、面積とは何かを確認しよう", a:"1cm四方の正方形が、いくつ分入るかのこと", role:"need", order:0},
+  {id:"c2", t:"sp", q:"長方形の面積の求め方を思い出してみよう", a:"縦×横で、正方形の数を数えられる", role:"need", order:1},
+  {id:"c3", t:"au", q:"でも、三角形は長方形じゃないよ？", a:"同じ三角形を2つ合わせると、平行四辺形になる", role:"need", order:2},
+  {id:"c4", t:"sp", q:"では、平行四辺形の面積はどうなるだろう？", a:"端を切って反対側に移すと長方形になるので、底辺×高さ", role:"need", order:3},
+  {id:"c5", t:"au", q:"じゃあ、三角形は？", a:"平行四辺形の半分なので、底辺×高さ÷2", role:"need", order:4},
+  {id:"c6", t:"au", q:"その公式、細長い三角形やとがった三角形でも使えるの？", a:"形が変わっても、2つ合わせると平行四辺形になるのは同じ。だから、いつでもその半分の「底辺×高さ÷2」になる", role:"need", order:5},
+  {id:"b1", t:"sp", q:"実際に紙で確かめてみよう", a:"紙の三角形を2枚切って、合わせて見せる", role:"bonus",
+    note:"あれば得：目で見て納得できる。入れても入れなくても大丈夫。"},
+  {id:"x1", t:"sp", q:"ついでに、台形の面積も確認しておこう", a:"（上底＋下底）×高さ÷2", role:"no",
+    note:"無くても良い：関連はあるが、この結論にたどり着くのには使わない。"},
+  {id:"x2", t:"sp", q:"私がこの公式を覚えたときの話をしよう", a:"小学生のころ、なかなか覚えられなかった", role:"no",
+    note:"必要ない：話し手自身の過程の話。聴衆の理解は進まない。"},
+  {id:"x3", t:"au", q:"三角形の角を全部足すと？", a:"180°になる", role:"no",
+    note:"必要ない：三角形の話ではあるが、面積とは関係がない。"}
+];
+const TAG = {au:"聴衆の疑問", sp:"話し手の問いかけ"};
+const CONCL_TEXT = "だから、どんな三角形でも「底辺×高さ÷2」で面積が求められる";
+const CONCL_HTML = `<li class="fixed" aria-label="結論（固定）"><div><span class="tag cn">結論</span><div class="q">${CONCL_TEXT}</div><div class="a">結論は最初に決めておくもの。ここにたどり着くように、上に問いを並べよう。</div></div><span class="lock">固定</span></li>`;
+function tag(c){return `<span class="tag ${c.t}">${TAG[c.t]}</span>`;}
+const byId = Object.fromEntries(CARDS.map(c=>[c.id,c]));
+const NEED = CARDS.filter(c=>c.role==="need");
+
+let seq = [];
+let order = [];
+let checked = false;
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function start(){
+  seq=[]; checked=false; order=shuffle(CARDS.map(c=>c.id));
+  render();
+  window.scrollTo({top:0});
+}
+
+function lisSet(ids){
+  // longest increasing subsequence of expected order among need cards
+  const arr = ids.map(id=>byId[id].order);
+  const n=arr.length, len=Array(n).fill(1), prev=Array(n).fill(-1);
+  for(let i=0;i<n;i++)for(let j=0;j<i;j++)if(arr[j]<arr[i]&&len[j]+1>len[i]){len[i]=len[j]+1;prev[i]=j;}
+  let best=-1; for(let i=0;i<n;i++) if(best<0||len[i]>len[best]) best=i;
+  const keep=new Set(); while(best>=0){keep.add(ids[best]);best=prev[best];}
+  return keep;
+}
+
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+function render(focusSel){
+  const seqEl=document.getElementById("seq");
+  const first={};
+  seqEl.querySelectorAll("li[data-id]").forEach(li=>{first[li.dataset.id]=li.getBoundingClientRect().top;});
+  renderInner();
+  if(!reduceMotion.matches){
+    seqEl.querySelectorAll("li[data-id]").forEach(li=>{
+      const before=first[li.dataset.id];
+      if(before===undefined) return;
+      const dy=before-li.getBoundingClientRect().top;
+      if(Math.abs(dy)<1) return;
+      li.animate(
+        [{transform:`translateY(${dy}px)`},{transform:"translateY(0)"}],
+        {duration:260,easing:"cubic-bezier(.2,.7,.3,1)"}
+      );
+    });
+  }
+  if(focusSel){const f=seqEl.querySelector(focusSel); if(f&&!f.disabled) f.focus();}
+}
+
+function renderInner(){
+  const seqEl=document.getElementById("seq"), poolEl=document.getElementById("pool");
+  document.getElementById("count").textContent = seq.length+"枚";
+
+  let marks={};
+  if(checked){
+    const needIn = seq.filter(id=>byId[id].role==="need");
+    const keep = lisSet(needIn);
+    seq.forEach(id=>{
+      const c=byId[id];
+      if(c.role==="need") marks[id] = keep.has(id) ? {m:"o"} : {m:"△", note:(byId[id].t==="au" ? "必要なカードだが、順番を見直そう。聴衆はこのタイミングで、この疑問を抱くだろうか？" : "必要なカードだが、順番を見直そう。この前提は、次の話を理解するのに間に合っているだろうか？")};
+      else if(c.role==="bonus") marks[id] = {m:"o", note:c.note, good:true};
+      else marks[id] = {m:"✕", note:c.note};
+    });
+  }
+
+  if(seq.length===0){
+    seqEl.innerHTML = '<li class="empty">下のカード置き場からカードをタップして、結論の上に並べよう</li>';
+  } else {
+    seqEl.innerHTML = seq.map((id,i)=>{
+      const c=byId[id], mk=marks[id];
+      const markHtml = mk ? `<span class="mark ${mk.m==="o"?"o":""}" aria-label="${mk.m==="o"?"正解":mk.m==="✕"?"不要":"順番違い"}">${mk.m==="o"?"":mk.m}</span>` : "";
+      const noteHtml = mk && mk.note ? `<div class="note ${mk.good?"good":""}">${esc(mk.note)}</div>` : "";
+      const ctrl = checked ? "<span></span>" : `<div class="ctrl">
+          <button type="button" aria-label="上へ" data-up="${i}" ${i===0?"disabled":""}>↑</button>
+          <button type="button" aria-label="下へ" data-down="${i}" ${i===seq.length-1?"disabled":""}>↓</button>
+          <button type="button" aria-label="置き場に戻す" data-rm="${i}">×</button>
+        </div>`;
+      return `<li data-id="${id}">${markHtml}<div>${tag(c)}<div class="q">${esc(c.q)}</div><div class="a">${esc(c.a)}</div></div>${ctrl}${noteHtml}</li>`;
+    }).join("");
+  }
+  seqEl.insertAdjacentHTML("beforeend", CONCL_HTML);
+
+  const rest = order.filter(id=>!seq.includes(id));
+  document.getElementById("poolHead").classList.toggle("hidden", checked);
+  poolEl.classList.toggle("hidden", checked);
+  poolEl.innerHTML = rest.length ? rest.map(id=>{
+    const c=byId[id];
+    return `<button type="button" data-add="${id}"><span>${tag(c)}<span class="q" style="display:block">${esc(c.q)}</span><span class="a" style="display:block">${esc(c.a)}</span></span><span class="plus">追加</span></button>`;
+  }).join("") : '<div class="done">すべてのカードを並べました。不要なものは×で戻せます。</div>';
+
+  const checkBtn=document.getElementById("check");
+  checkBtn.textContent = checked ? "並べ直す" : "答え合わせ";
+  checkBtn.disabled = !checked && seq.length===0;
+
+  renderResult();
+}
+
+function renderResult(){
+  const el=document.getElementById("result");
+  if(!checked){el.classList.add("hidden");el.innerHTML="";return;}
+  const needIn = seq.filter(id=>byId[id].role==="need");
+  const keep = lisSet(needIn);
+  const missing = NEED.filter(c=>!seq.includes(c.id));
+  const wrong = seq.filter(id=>byId[id].role==="no");
+  const misorder = needIn.filter(id=>!keep.has(id));
+  const perfect = !missing.length && !wrong.length && !misorder.length;
+
+  let html = perfect
+    ? `<h3>よくできました</h3><p>必要な問いがすべて、聴衆が疑問を抱く順につながっています。</p>`
+    : `<h3>もう一歩</h3><p>必要なカード ${NEED.length-missing.length}／${NEED.length}枚、順番どおり ${keep.size}枚、不要なカード ${wrong.length}枚。</p>`;
+  if(missing.length){
+    html += `<p>まだ使っていない、必要なカードがあります。</p><ul>${missing.map(c=>`<li>${esc(c.q)}</li>`).join("")}</ul>`;
+  }
+  if(wrong.length){
+    html += `<p>✕のカードは、聴衆が結論にたどり着くのに役立ちません。理由はカードの下を読もう。</p>`;
+  }
+  html += `<div class="types"><p><strong>問いには2種類ある</strong></p>
+    <p><span class="tag au">聴衆の疑問</span>「本当に？」「じゃあ、どうなる？」のように、話を聞いた聴衆から自然に出てくる問い。</p>
+    <p><span class="tag sp">話し手の問いかけ</span>聴衆は、知らないことについては疑問を持てない。だから話し手が先回りして、前提をそろえる問いを差し出す。</p>
+    <p><small>プレゼンで差が出るのは、後者に気づけるかどうか。たとえば「ソーシャルアントレプレナーシップとは？」は、聴衆が自分からは聞けない問いです。</small></p></div>
+  <div class="readq"><p><strong>問いだけを、上から読んでみよう</strong><br><small>2種類の問いを読むだけで話の流れが見えれば、問いでつながっている証拠です。</small></p>
+    <ol>${seq.map(id=>`<li>${tag(byId[id])}${esc(byId[id].q)}</li>`).join("")}</ol>
+    <div class="end"><span class="tag cn">結論</span>${CONCL_TEXT}</div></div>`;
+  el.innerHTML=html; el.classList.remove("hidden");
+}
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("button"); if(!t) return;
+  if(t.dataset.add){seq.push(t.dataset.add);render();return;}
+  if(t.dataset.up){const i=+t.dataset.up;[seq[i-1],seq[i]]=[seq[i],seq[i-1]];render(`[data-up="${i-1}"]`);return;}
+  if(t.dataset.down){const i=+t.dataset.down;[seq[i+1],seq[i]]=[seq[i],seq[i+1]];render(`[data-down="${i+1}"]`);return;}
+  if(t.dataset.rm){seq.splice(+t.dataset.rm,1);render();return;}
+  if(t.id==="check"){
+    checked=!checked; render();
+    if(checked) document.getElementById("result").scrollIntoView({behavior:"smooth",block:"start"});
+    else window.scrollTo({top:0,behavior:"smooth"});
+    return;
+  }
+  if(t.id==="reset"){start();}
+});
+start();
+</script>
+</body>
+</html>
